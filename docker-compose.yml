@@ -1,0 +1,42 @@
+version: '3.7'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: lamp-mysql
+    volumes:
+      - db-store:/var/lib/mysql
+      - ./logs:/var/log/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_PASS}
+      - TZ=${TZ}
+    ports:
+      - ${DB_PORT}:3306
+  php-apache:
+    container_name: lamp-apache
+    build: ./docker/php
+    volumes:
+      - ./htdocs:/var/www/html
+    ports:
+      - 8080:80
+    depends_on:
+      - mysql
+  front:
+    container_name: lamp-nextjs
+    build: ./docker/front
+    ports:
+      - 3000:3000
+    tty: true # コンテナが勝手に終了しないための設定
+    volumes:
+      - ./front:/usr/src/app
+    stdin_open: true # 標準入出力とエラー出力をコンテナに結びつける設定
+    environment:
+      - CHOKIDAR_USEPOLLING=true # ホットリロードを行う設定
+    # depends_on:
+    #   - php-apache
+
+volumes:
+  db-store:
