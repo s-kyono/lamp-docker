@@ -1,14 +1,30 @@
 version: '3.7'
 services:
+  nginx:
+    container_name: lamp-nginx
+    build:
+      context: ./
+      dockerfile: ./nginx/Dockerfile
+    volumes:
+      - type: bind
+        source: ../api-server
+        target: /var/www/html
+    environment:
+      TZ: "Asia/Tokyo"
+    depends_on:
+      - php
+    ports:
+      - '8000:80'
+      - '4000:443'
   php:
     container_name: lamp-php
     build:
       context: ../
       dockerfile: ./docker/php/Dockerfile
     volumes:
-      - ./api-server:/var/www/html
-    ports:
-      - 8080:80
+      - ../api-server:/var/www/html
+    environment:
+      TZ: "Asia/Tokyo"
     depends_on:
       - mysql
   mysql:
@@ -17,7 +33,7 @@ services:
     volumes:
       - db-store:/var/lib/mysql
       - ./logs:/var/log/mysql
-      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./mysql/my.cnf:/etc/mysql/conf.d/my.cnf
     environment:
       - MYSQL_DATABASE=${DB_NAME}
       - MYSQL_USER=${DB_USER}
